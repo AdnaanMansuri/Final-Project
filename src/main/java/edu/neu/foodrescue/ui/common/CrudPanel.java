@@ -188,11 +188,11 @@ public abstract class CrudPanel<T> extends JPanel implements Refreshable {
     }
 
     private void doAdd() {
-        T item = readForm(null);
-        if (item == null) {
-            return;
-        }
         try {
+            T item = readForm(null);
+            if (item == null) {
+                return;
+            }
             create(item);
             Dialogs.info(this, "Added: " + describe(item));
             refresh();
@@ -205,11 +205,11 @@ public abstract class CrudPanel<T> extends JPanel implements Refreshable {
         if (selected == null) {
             return;
         }
-        T item = readForm(selected);
-        if (item == null) {
-            return;
-        }
         try {
+            T item = readForm(selected);
+            if (item == null) {
+                return;
+            }
             update(item);
             Dialogs.info(this, "Updated: " + describe(item));
             refresh();
@@ -222,12 +222,12 @@ public abstract class CrudPanel<T> extends JPanel implements Refreshable {
         if (selected == null) {
             return;
         }
-        String warning = deleteWarning(selected);
-        String msg = "Delete " + describe(selected) + "?" + (warning.isEmpty() ? "" : "\n\n" + warning);
-        if (!Dialogs.confirm(this, msg)) {
-            return;
-        }
         try {
+            String warning = deleteWarning(selected);
+            String msg = "Delete " + describe(selected) + "?" + (warning.isEmpty() ? "" : "\n\n" + warning);
+            if (!Dialogs.confirm(this, msg)) {
+                return;
+            }
             delete(selected);
             refresh();
         } catch (DataAccessException ex) {
