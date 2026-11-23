@@ -21,12 +21,15 @@ public class WorkRequestDao extends BaseDao<WorkRequest> {
 
     private static final String SELECT =
             "SELECT w.*, s.full_name AS sender_name, r.full_name AS receiver_name, "
-            + "f.name AS food_name, n.category AS need_category, n.quantity AS need_qty, "
+            + "f.name AS food_name, f.quantity AS food_qty, f.unit AS food_unit, "
+            + "f.pickup_deadline AS food_deadline, so.name AS supplier_name, "
+            + "n.category AS need_category, n.quantity AS need_qty, "
             + "c.name AS charity_name "
             + "FROM work_request w "
             + "JOIN user_account s ON s.id = w.sender_id "
             + "LEFT JOIN user_account r ON r.id = w.receiver_id "
             + "LEFT JOIN food_item f ON f.id = w.food_item_id "
+            + "LEFT JOIN organization so ON so.id = f.supplier_org_id "
             + "LEFT JOIN food_need n ON n.id = w.food_need_id "
             + "LEFT JOIN organization c ON c.id = w.charity_org_id ";
 
@@ -47,6 +50,10 @@ public class WorkRequestDao extends BaseDao<WorkRequest> {
         if (w instanceof FoodItemRequest fr) {
             fr.setFoodItemId(getNullableInt(rs, "food_item_id"));
             fr.setFoodItemName(rs.getString("food_name"));
+            fr.setFoodQuantity(rs.getDouble("food_qty"));
+            fr.setFoodUnit(rs.getString("food_unit"));
+            fr.setFoodDeadline(getTime(rs, "food_deadline"));
+            fr.setSupplierOrgName(rs.getString("supplier_name"));
         }
         if (w instanceof ClaimApprovalRequest ca) {
             ca.setCharityOrgId(getNullableInt(rs, "charity_org_id"));
