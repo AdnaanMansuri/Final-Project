@@ -93,6 +93,14 @@ public abstract class BaseDao<T> implements Dao<T> {
         }
     }
 
+    /**
+     * The application's clock. Always pass this instead of SQL NOW(): the MySQL container runs
+     * in UTC while the app works in local time, so NOW() would be hours off.
+     */
+    protected static Timestamp now() {
+        return Timestamp.valueOf(LocalDateTime.now());
+    }
+
     // ---------- null-safe helpers ----------
 
     protected static void setNullableInt(PreparedStatement ps, int idx, Integer v) throws SQLException {

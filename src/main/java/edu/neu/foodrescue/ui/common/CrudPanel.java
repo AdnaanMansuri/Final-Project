@@ -28,6 +28,7 @@ public abstract class CrudPanel<T> extends JPanel implements Refreshable {
     protected final JTable table;
     private List<T> items = new ArrayList<>();
     private T selected;
+    private boolean reloading;
 
     private final JButton addButton = UIStyle.primaryButton("Add");
     private final JButton updateButton = UIStyle.primaryButton("Update");
@@ -155,12 +156,23 @@ public abstract class CrudPanel<T> extends JPanel implements Refreshable {
             items = new ArrayList<>();
             Dialogs.error(this, ex.getMessage());
         }
-        table.clearSelection();
-        model.setRowCount(0);
-        for (T item : items) {
-            model.addRow(toRow(item));
+        // Ignore selection events while rows are replaced, so the sorter never sees a stale index.
+        reloading = true;
+        try {
+            table.clearSelection();
+            model.setRowCount(0);
+            for (T item : items) {
+                model.addRow(toRow(item));
+            }
+        } finally {
+            reloading = false;
         }
         setSelected(null);
+    }
+
+    /** Item behind a model row (used by row renderers). */
+    protected T itemAt(int modelRow) {
+        return modelRow >= 0 && modelRow < items.size() ? items.get(modelRow) : null;
     }
 
     protected T getSelected() {
@@ -168,8 +180,11 @@ public abstract class CrudPanel<T> extends JPanel implements Refreshable {
     }
 
     private void onSelect() {
+        if (reloading) {
+            return;
+        }
         int viewRow = table.getSelectedRow();
-        if (viewRow < 0) {
+        if (viewRow < 0 || viewRow >= table.getRowCount()) {
             setSelected(null);
             return;
         }
@@ -192,6 +207,15 @@ public abstract class CrudPanel<T> extends JPanel implements Refreshable {
         onModeChanged(editing);
     }
 
+    /** Message shown after a successful add (override to explain what happens next). */
+    protected String addedMessage(T item) {
+        return "Added: " + describe(item);
+    }
+
+    protected String updatedMessage(T item) {
+        return "Updated: " + describe(item);
+    }
+
     private void doAdd() {
         try {
             T item = readForm(null);
@@ -199,7 +223,10 @@ public abstract class CrudPanel<T> extends JPanel implements Refreshable {
                 return;
             }
             create(item);
-            Dialogs.info(this, "Added: " + describe(item));
+            Dialogs.info(this, addedMessage(item));
+            refresh();
+        } catch (IllegalStateException ex) {
+            Dialogs.warn(this, ex.getMessage());
             refresh();
         } catch (DataAccessException ex) {
             Dialogs.error(this, ex.getMessage());
@@ -216,7 +243,10 @@ public abstract class CrudPanel<T> extends JPanel implements Refreshable {
                 return;
             }
             update(item);
-            Dialogs.info(this, "Updated: " + describe(item));
+            Dialogs.info(this, updatedMessage(item));
+            refresh();
+        } catch (IllegalStateException ex) {
+            Dialogs.warn(this, ex.getMessage());
             refresh();
         } catch (DataAccessException ex) {
             Dialogs.error(this, ex.getMessage());
@@ -234,6 +264,9 @@ public abstract class CrudPanel<T> extends JPanel implements Refreshable {
                 return;
             }
             delete(selected);
+            refresh();
+        } catch (IllegalStateException ex) {
+            Dialogs.warn(this, ex.getMessage());
             refresh();
         } catch (DataAccessException ex) {
             Dialogs.error(this, ex.getMessage());

@@ -37,7 +37,7 @@ public class FoodItemDao extends BaseDao<FoodItem> {
     @Override
     public int create(FoodItem f) {
         int id = insert("INSERT INTO food_item (supplier_org_id, posted_by, name, category, quantity, unit, "
-                + "allergens, pickup_deadline, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", ps -> {
+                + "allergens, pickup_deadline, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ps -> {
             ps.setInt(1, f.getSupplierOrgId());
             ps.setInt(2, f.getPostedById());
             ps.setString(3, f.getName());
@@ -47,6 +47,7 @@ public class FoodItemDao extends BaseDao<FoodItem> {
             ps.setString(7, f.getAllergens());
             ps.setTimestamp(8, Timestamp.valueOf(f.getPickupDeadline()));
             ps.setString(9, f.getStatus().name());
+            ps.setTimestamp(10, now());
         });
         f.setId(id);
         return id;
@@ -72,8 +73,8 @@ public class FoodItemDao extends BaseDao<FoodItem> {
 
     /** Listings a charity can claim right now, most urgent first. */
     public List<FoodItem> findAvailable() {
-        return query(SELECT + "WHERE f.status = 'AVAILABLE' AND f.pickup_deadline > NOW() "
-                + "ORDER BY f.pickup_deadline", null);
+        return query(SELECT + "WHERE f.status = 'AVAILABLE' AND f.pickup_deadline > ? "
+                + "ORDER BY f.pickup_deadline", ps -> ps.setTimestamp(1, now()));
     }
 
     @Override
@@ -100,8 +101,8 @@ public class FoodItemDao extends BaseDao<FoodItem> {
 
     /** Marks every open listing whose deadline has passed as EXPIRED. Returns how many changed. */
     public int expireOverdue() {
-        return execute("UPDATE food_item SET status = 'EXPIRED' WHERE pickup_deadline < NOW() "
-                + "AND status IN ('PENDING_APPROVAL', 'AVAILABLE', 'CLAIMED')", null);
+        return execute("UPDATE food_item SET status = 'EXPIRED' WHERE pickup_deadline < ? "
+                + "AND status IN ('PENDING_APPROVAL', 'AVAILABLE', 'CLAIMED')", ps -> ps.setTimestamp(1, now()));
     }
 
     @Override
