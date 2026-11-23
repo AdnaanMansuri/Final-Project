@@ -1,0 +1,236 @@
+@startuml class-diagram
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #FAFAFA
+  BorderColor #2E7D32
+  ArrowColor #424242
+}
+hide empty members
+title Last-Minute Food Rescue Network - Class Diagram
+
+package "model" {
+
+  abstract class Enterprise {
+    - id : int
+    - name : String
+    + {abstract} getType() : EnterpriseType
+    + {abstract} getContribution() : String
+    + accepts(orgType : OrganizationType) : boolean
+    + {static} of(id, name, type) : Enterprise
+  }
+  class SupplierEnterprise
+  class CharityEnterprise
+
+  class Organization {
+    - id : int
+    - enterpriseId : int
+    - name : String
+    - type : OrganizationType
+    - address : String
+  }
+
+  class UserAccount {
+    - id : int
+    - username : String
+    - passwordHash : String
+    - fullName : String
+    - email : String
+    - roleType : RoleType
+    - organizationId : Integer
+    + getRole() : Role
+  }
+
+  interface Approvable {
+    + approve(note : String)
+    + reject(reason : String)
+  }
+
+  interface Expirable {
+    + getDeadline() : LocalDateTime
+    + isExpired() : boolean
+    + minutesLeft() : long
+    + getUrgency() : Urgency
+  }
+
+  class FoodItem {
+    - id : int
+    - supplierOrgId : int
+    - postedById : int
+    - name : String
+    - category : FoodCategory
+    - quantity : double
+    - unit : String
+    - allergens : String
+    - pickupDeadline : LocalDateTime
+    - status : FoodStatus
+    + estimatedMeals() : int
+  }
+
+  class FoodNeed {
+    - id : int
+    - charityOrgId : int
+    - category : FoodCategory
+    - quantity : double
+    - description : String
+    - neededBy : LocalDate
+  }
+}
+
+package "model.role" {
+  abstract class Role {
+    + {abstract} getType() : RoleType
+    + {abstract} isAdmin() : boolean
+    + {abstract} createWorkArea(frame, user) : JPanel
+    + {static} of(type : RoleType) : Role
+  }
+  class SystemAdminRole
+  class SupplierManagerRole
+  class StoreStaffRole
+  class CharityManagerRole
+  class CharityCoordinatorRole
+}
+
+package "model.workrequest" {
+  abstract class WorkRequest {
+    - id : int
+    - senderId : int
+    - receiverId : Integer
+    - targetEnterpriseId : Integer
+    - status : RequestStatus
+    - message : String
+    - requestDate : LocalDateTime
+    - resolveDate : LocalDateTime
+    + approve(note : String)
+    + reject(reason : String)
+    + complete(note : String)
+    + {abstract} getType() : RequestType
+    + {abstract} getSummary() : String
+    + {abstract} isInterEnterprise() : boolean
+  }
+  abstract class FoodItemRequest {
+    - foodItemId : Integer
+  }
+  class "DonationListingRequest\n(WR1 - intra)" as DonationListingRequest
+  class "ClaimApprovalRequest\n(WR2 - intra)" as ClaimApprovalRequest {
+    - charityOrgId : Integer
+    - pickupTime : LocalDateTime
+  }
+  class "FoodClaimRequest\n(WR3 - inter)" as FoodClaimRequest {
+    - charityOrgId : Integer
+    - pickupTime : LocalDateTime
+  }
+  class "FoodNeedRequest\n(WR4 - inter)" as FoodNeedRequest {
+    - foodNeedId : Integer
+    - charityOrgId : Integer
+  }
+}
+
+package "model.enums" {
+  enum EnterpriseType {
+    SUPPLIER
+    CHARITY
+  }
+  enum OrganizationType {
+    BAKERY
+    GROCERY_STORE
+    FOOD_BANK
+    SHELTER
+  }
+  enum RoleType {
+    SYSTEM_ADMIN
+    SUPPLIER_MANAGER
+    STORE_STAFF
+    CHARITY_MANAGER
+    CHARITY_COORDINATOR
+  }
+  enum FoodCategory {
+    BAKERY
+    PRODUCE
+    DAIRY
+    PREPARED_MEAL
+    PACKAGED
+  }
+  enum FoodStatus {
+    PENDING_APPROVAL
+    AVAILABLE
+    CLAIMED
+    PICKED_UP
+    EXPIRED
+    REJECTED
+  }
+  enum RequestType {
+    DONATION_LISTING
+    CLAIM_APPROVAL
+    FOOD_CLAIM
+    FOOD_NEED
+  }
+  enum RequestStatus {
+    PENDING
+    ACCEPTED
+    REJECTED
+    COMPLETED
+    EXPIRED
+  }
+}
+
+package "dao" {
+  interface "Dao<T>" as Dao {
+    + create(t : T) : int
+    + findById(id : int) : T
+    + findAll() : List<T>
+    + update(t : T) : boolean
+    + delete(id : int) : boolean
+  }
+  class EnterpriseDao
+  class OrganizationDao
+  class UserAccountDao
+  class FoodItemDao
+  class FoodNeedDao
+  class WorkRequestDao
+}
+
+package "util" {
+  class DBConnection <<singleton>> {
+    + {static} getInstance() : DBConnection
+    + getConnection() : Connection
+  }
+}
+
+' --- inheritance ---
+Enterprise <|-- SupplierEnterprise
+Enterprise <|-- CharityEnterprise
+Role <|-- SystemAdminRole
+Role <|-- SupplierManagerRole
+Role <|-- StoreStaffRole
+Role <|-- CharityManagerRole
+Role <|-- CharityCoordinatorRole
+WorkRequest <|-- FoodItemRequest
+FoodItemRequest <|-- DonationListingRequest
+FoodItemRequest <|-- ClaimApprovalRequest
+FoodItemRequest <|-- FoodClaimRequest
+WorkRequest <|-- FoodNeedRequest
+
+' --- interfaces ---
+Approvable <|.. WorkRequest
+Expirable <|.. FoodItem
+Expirable <|.. FoodNeed
+Dao <|.. EnterpriseDao
+Dao <|.. OrganizationDao
+Dao <|.. UserAccountDao
+Dao <|.. FoodItemDao
+Dao <|.. FoodNeedDao
+Dao <|.. WorkRequestDao
+
+' --- associations ---
+Enterprise "1" *-- "*" Organization
+Organization "1" o-- "*" UserAccount
+UserAccount ..> Role : creates via Role.of()
+Organization "1" -- "*" FoodItem : supplies >
+Organization "1" -- "*" FoodNeed : posts >
+FoodItemRequest --> "1" FoodItem
+FoodNeedRequest --> "1" FoodNeed
+WorkRequest --> "2" UserAccount : sender / receiver
+FoodItemDao ..> DBConnection
+WorkRequestDao ..> DBConnection
+@enduml

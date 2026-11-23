@@ -1,0 +1,75 @@
+@startuml use-case
+!pragma layout smetana
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor #E8F5E9
+  BorderColor #2E7D32
+}
+title Last-Minute Food Rescue Network - Use Case Diagram
+
+actor "System Admin" as SA
+actor "Supplier Manager\n(Admin)" as SM
+actor "Store Staff" as SS
+actor "Charity Manager\n(Admin)" as CM
+actor "Charity Coordinator" as CC
+
+rectangle "Food Rescue Network System" {
+  usecase "Log In / Log Out" as UC0
+
+  usecase "Manage Enterprises" as UC1
+  usecase "Manage Organizations" as UC2
+  usecase "Manage Admin Accounts" as UC3
+
+  usecase "Manage Store Staff Accounts" as UC4
+  usecase "Approve / Reject\nDonation Listing (WR1)" as UC5
+  usecase "Accept / Reject\nFood Claim (WR3)" as UC6
+  usecase "Respond to\nFood Need (WR4)" as UC7
+
+  usecase "Post Surplus Food Item" as UC8
+  usecase "Update / Delete Own Listing" as UC9
+  usecase "Mark Food as Picked Up" as UC10
+
+  usecase "Manage Coordinator Accounts" as UC11
+  usecase "Approve / Reject\nClaim (WR2)" as UC12
+  usecase "View Impact Dashboard" as UC13
+
+  usecase "Browse Available Food\n(filter by category / allergen)" as UC14
+  usecase "Claim Food Item" as UC15
+  usecase "Post Food Need" as UC16
+  usecase "Track Request Status" as UC17
+}
+
+SA --> UC0
+SA --> UC1
+SA --> UC2
+SA --> UC3
+
+SM --> UC0
+SM --> UC4
+SM --> UC5
+SM --> UC6
+SM --> UC7
+
+SS --> UC0
+SS --> UC8
+SS --> UC9
+SS --> UC10
+
+CM --> UC0
+CM --> UC11
+CM --> UC12
+CM --> UC13
+
+CC --> UC0
+CC --> UC14
+CC --> UC15
+CC --> UC16
+CC --> UC17
+
+UC8 ..> UC5 : <<include>>
+UC15 ..> UC12 : <<include>>
+UC12 ..> UC6 : <<include>>
+UC16 ..> UC7 : <<include>>
+@enduml
