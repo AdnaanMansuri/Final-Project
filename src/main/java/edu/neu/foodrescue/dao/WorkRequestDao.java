@@ -103,8 +103,8 @@ public class WorkRequestDao extends BaseDao<WorkRequest> {
     @Override
     public int create(WorkRequest w) {
         int id = insert("INSERT INTO work_request (type, sender_id, receiver_id, target_enterprise_id, "
-                + "food_item_id, food_need_id, charity_org_id, pickup_time, status, message) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ps -> {
+                + "food_item_id, food_need_id, charity_org_id, pickup_time, status, message, request_date) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ps -> {
             ps.setString(1, w.getType().name());
             ps.setInt(2, w.getSenderId());
             setNullableInt(ps, 3, w.getReceiverId());
@@ -112,6 +112,7 @@ public class WorkRequestDao extends BaseDao<WorkRequest> {
             bindSpecific(ps, 5, w);
             ps.setString(9, w.getStatus().name());
             ps.setString(10, w.getMessage());
+            ps.setTimestamp(11, now());
         });
         w.setId(id);
         return id;
@@ -173,8 +174,8 @@ public class WorkRequestDao extends BaseDao<WorkRequest> {
     /** Expires open requests whose food item has expired. */
     public int expireForExpiredFood() {
         return execute("UPDATE work_request w JOIN food_item f ON f.id = w.food_item_id "
-                + "SET w.status = 'EXPIRED', w.resolve_date = NOW() "
-                + "WHERE f.status = 'EXPIRED' AND w.status IN ('PENDING', 'ACCEPTED')", null);
+                + "SET w.status = 'EXPIRED', w.resolve_date = ? "
+                + "WHERE f.status = 'EXPIRED' AND w.status IN ('PENDING', 'ACCEPTED')", ps -> ps.setTimestamp(1, now()));
     }
 
     @Override

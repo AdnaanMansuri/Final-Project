@@ -8,6 +8,7 @@ services:
       MYSQL_DATABASE: food_rescue
       MYSQL_USER: foodapp
       MYSQL_PASSWORD: foodapp123
+      TZ: America/New_York   # so times in MySQL Workbench match the app
     ports:
       - "3306:3306"
     volumes:
