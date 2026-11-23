@@ -92,6 +92,11 @@ public abstract class CrudPanel<T> extends JPanel implements Refreshable {
         return true;
     }
 
+    /** Hook: return false to block only delete (e.g. a user deleting their own account). */
+    protected boolean canDelete(T item) {
+        return true;
+    }
+
     // ---------- template ----------
 
     protected final void init() {
@@ -183,7 +188,7 @@ public abstract class CrudPanel<T> extends JPanel implements Refreshable {
         boolean modifiable = editing && canModify(item);
         addButton.setEnabled(!editing);
         updateButton.setEnabled(modifiable);
-        deleteButton.setEnabled(modifiable);
+        deleteButton.setEnabled(modifiable && canDelete(item));
         onModeChanged(editing);
     }
 
