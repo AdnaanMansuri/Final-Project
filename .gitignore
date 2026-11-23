@@ -4,3 +4,4 @@ nb-configuration.xml
 *.class
 .DS_Store
 Thumbs.db
+*.lnk
